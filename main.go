@@ -1,7 +1,12 @@
 package main
 
-import "fmt"
+type LogEntry struct {
+	Timestamp string
+	LogLevel  string
+	UserID    string
+	Message   string
+	Source    string
+}
 
 func main() {
-	fmt.Println("Hello Woodchuck")
 }
