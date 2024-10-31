@@ -14,45 +14,54 @@ import (
 	"github.com/ronbarrantes/woodchuck/utils"
 )
 
-// 	currentTime := time.Now()
-// 	formattedTime := currentTime.Format("2006-01-02 15:04:05")
-
-type LogState int
-
-type LogNumber struct {
+type LogIDGenerator struct {
 	ID int
 	mu sync.Mutex
 }
 
 type ApiServer struct {
 	listenAddress string
-	logCounter    *LogNumber
+	logCounter    *LogIDGenerator
 }
+
+type LogLevel string
 
 type LogEntry struct {
 	Timestamp time.Time `json:"timestamp"`
 	LogID     int       `json:"log_id"`
-	LogLevel  string    `json:"level"` // LOG ERROR WARNING
+	LogLevel  LogLevel  `json:"level"` // "error", "warning", "log"
 	UserID    string    `json:"user_id"`
 	Message   string    `json:"message"`
-	// Source    string // maybe
-	// Trace     string // maybe
 }
 
+// Constants for LogLevel
 const (
-	LOG LogState = iota
-	WARN
-	ERROR
+	LogLevelError   LogLevel = "error"
+	LogLevelWarning LogLevel = "warning"
+	LogLevelLog     LogLevel = "log"
 )
 
-var stateName = map[LogState]string{
-	LOG:   "LOG",
-	WARN:  "WARN",
-	ERROR: "ERROR",
+// IsValid checks if a LogLevel is valid
+func (l LogLevel) IsValid() bool {
+	switch l {
+	case LogLevelError, LogLevelWarning, LogLevelLog:
+		return true
+	default:
+		return false
+	}
 }
 
-func (ls LogState) String() string {
-	return stateName[ls]
+// UnmarshalJSON enforces valid LogLevel values during JSON unmarshalling
+func (l *LogLevel) UnmarshalJSON(data []byte) error {
+	var level string
+	if err := json.Unmarshal(data, &level); err != nil {
+		return err
+	}
+	*l = LogLevel(level)
+	if !l.IsValid() {
+		return fmt.Errorf("invalid log level: %s", level)
+	}
+	return nil
 }
 
 func (s *ApiServer) Run() {
@@ -64,9 +73,7 @@ func (s *ApiServer) Run() {
 
 	router := mux.NewRouter()
 
-	// Have a place to see the logs (HTML) AND (Server)
 	router.HandleFunc("/", s.handleMainPage)
-
 	router.HandleFunc("/v1/api/log", s.handlePath)
 
 	fmt.Printf("Listening to %s\n", s.listenAddress)
@@ -74,19 +81,16 @@ func (s *ApiServer) Run() {
 }
 
 func Server(address string) *ApiServer {
-
 	return &ApiServer{
 		listenAddress: address,
-		logCounter:    NewLogID(),
+		logCounter:    NewLogCounter(),
 	}
 }
 
-// may put some kind of UI on here
 func (s *ApiServer) handleMainPage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Woodchuck")
 }
 
-// In Charge of setting the POST route
 func (s *ApiServer) handlePath(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
@@ -96,25 +100,22 @@ func (s *ApiServer) handlePath(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (id *LogNumber) inc() int {
+func (id *LogIDGenerator) inc() int {
 	id.mu.Lock()
 	defer id.mu.Unlock()
 	id.ID++
 	return id.ID
 }
 
-func NewLogID() *LogNumber {
-	return &LogNumber{
+func NewLogCounter() *LogIDGenerator {
+	return &LogIDGenerator{
 		ID: 0,
 	}
 }
 
-func CreateLog(uid string, lvl string, msg string, lid *LogNumber) (LogEntry, error) {
-
+func (s *ApiServer) CreateLog(uid string, lvl LogLevel, msg string) (LogEntry, error) {
 	if lvl == "" || uid == "" || msg == "" {
-		fmt.Println(lvl, uid, msg, lid.ID)
-		err := errors.New("Cannot create log entry")
-		fmt.Printf("%s\n", err)
+		err := errors.New("cannot create log entry")
 		return LogEntry{}, err
 	}
 
@@ -123,26 +124,26 @@ func CreateLog(uid string, lvl string, msg string, lid *LogNumber) (LogEntry, er
 		LogLevel:  lvl,
 		UserID:    uid,
 		Message:   msg,
-		LogID:     lid.inc(),
+		LogID:     s.logCounter.inc(),
 	}, nil
 }
 
 func (s *ApiServer) handlePostLog(w http.ResponseWriter, r *http.Request) {
 	var log LogEntry
 
-	// Decode the JSON body into the struct
 	if err := json.NewDecoder(r.Body).Decode(&log); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// Validate required fields
-	if log.LogLevel == "" || log.Message == "" {
-		http.Error(w, "The level and message are required", http.StatusBadRequest)
+	if log.Message == "" {
+		http.Error(w, "The message is required", http.StatusBadRequest)
 		return
 	}
 
-	registeredLog, err := CreateLog(r.RemoteAddr, log.LogLevel, log.Message, s.logCounter)
+	// Create a log entry
+	registeredLog, err := s.CreateLog(r.RemoteAddr, log.LogLevel, log.Message)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
