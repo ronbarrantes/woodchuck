@@ -14,6 +14,14 @@ import (
 	"github.com/ronbarrantes/woodchuck/utils"
 )
 
+// ### CONSTS AND VARS ###
+const (
+	LogLevelInfo  LogLevel = "info"
+	LogLevelWarn  LogLevel = "warn"
+	LogLevelError LogLevel = "error"
+)
+
+// ### TYPES ###
 type LogIDGenerator struct {
 	ID int
 	mu sync.Mutex
@@ -34,24 +42,37 @@ type LogEntry struct {
 	Message   string    `json:"message"`
 }
 
-// Constants for LogLevel
-const (
-	LogLevelError   LogLevel = "error"
-	LogLevelWarning LogLevel = "warning"
-	LogLevelLog     LogLevel = "log"
-)
+// ### FUNCTIONS ###
+func NewLogCounter() *LogIDGenerator {
+	return &LogIDGenerator{
+		ID: 0,
+	}
+}
 
-// IsValid checks if a LogLevel is valid
+func Server(address string) *ApiServer {
+	return &ApiServer{
+		listenAddress: address,
+		logCounter:    NewLogCounter(),
+	}
+}
+
+// ### METHODS ###
+func (id *LogIDGenerator) inc() int {
+	id.mu.Lock()
+	defer id.mu.Unlock()
+	id.ID++
+	return id.ID
+}
+
 func (l LogLevel) IsValid() bool {
 	switch l {
-	case LogLevelError, LogLevelWarning, LogLevelLog:
+	case LogLevelInfo, LogLevelWarn, LogLevelError:
 		return true
 	default:
 		return false
 	}
 }
 
-// UnmarshalJSON enforces valid LogLevel values during JSON unmarshalling
 func (l *LogLevel) UnmarshalJSON(data []byte) error {
 	var level string
 	if err := json.Unmarshal(data, &level); err != nil {
@@ -80,13 +101,6 @@ func (s *ApiServer) Run() {
 	log.Fatal(http.ListenAndServe("0.0.0.0:"+s.listenAddress, corsHandler(router)))
 }
 
-func Server(address string) *ApiServer {
-	return &ApiServer{
-		listenAddress: address,
-		logCounter:    NewLogCounter(),
-	}
-}
-
 func (s *ApiServer) handleMainPage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Woodchuck")
 }
@@ -100,17 +114,26 @@ func (s *ApiServer) handlePath(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (id *LogIDGenerator) inc() int {
-	id.mu.Lock()
-	defer id.mu.Unlock()
-	id.ID++
-	return id.ID
-}
+func (s *ApiServer) handlePostLog(w http.ResponseWriter, r *http.Request) {
+	var log LogEntry
 
-func NewLogCounter() *LogIDGenerator {
-	return &LogIDGenerator{
-		ID: 0,
+	if err := json.NewDecoder(r.Body).Decode(&log); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
+
+	if log.Message == "" {
+		http.Error(w, "The message is required", http.StatusBadRequest)
+		return
+	}
+
+	registeredLog, err := s.CreateLog(r.RemoteAddr, log.LogLevel, log.Message)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, registeredLog)
 }
 
 func (s *ApiServer) CreateLog(uid string, lvl LogLevel, msg string) (LogEntry, error) {
@@ -126,28 +149,4 @@ func (s *ApiServer) CreateLog(uid string, lvl LogLevel, msg string) (LogEntry, e
 		Message:   msg,
 		LogID:     s.logCounter.inc(),
 	}, nil
-}
-
-func (s *ApiServer) handlePostLog(w http.ResponseWriter, r *http.Request) {
-	var log LogEntry
-
-	if err := json.NewDecoder(r.Body).Decode(&log); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	// Validate required fields
-	if log.Message == "" {
-		http.Error(w, "The message is required", http.StatusBadRequest)
-		return
-	}
-
-	// Create a log entry
-	registeredLog, err := s.CreateLog(r.RemoteAddr, log.LogLevel, log.Message)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	utils.WriteJSON(w, http.StatusOK, registeredLog)
 }
