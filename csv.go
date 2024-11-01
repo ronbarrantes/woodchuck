@@ -11,6 +11,7 @@ import (
 type CsvFile struct {
 	filename string
 	path     string
+	fullpath string
 }
 
 type Writer struct {
@@ -45,34 +46,32 @@ func (f *CsvFile) InitCSV() {
 	currDate := time.Now().Format("2006-01-02")
 	currentFileName := currDate + "-" + f.filename
 
-	fullPath := FullPath(f.path, currentFileName)
-
-	fmt.Println("--->>>", fullPath)
-
-	// create a directory if it doesnt exist
-
-	// check if the file exist and if it doesn't
-	// create a new file with file
-
-	if err := EnsureDirectoryAndFile(f.path, currentFileName); err != nil {
+	fullpath, err := EnsureDirectoryAndFile(f.path, currentFileName)
+	if err != nil {
 		panic("File cannot be created")
 	}
 
+	f.fullpath = fullpath
+	fmt.Println("fullPath", fullpath)
 }
-func FullPath(path, filename string) string {
-	if path[len(path)-1] != '/' {
-		path = path + "/"
+
+func (f *CsvFile) CheckFullPath() {
+	if f.fullpath == "" {
+
+		fmt.Println("No path made")
+		return
 	}
-	return path + filename
+
+	fmt.Println("the path is", f.fullpath)
 }
 
 // EnsureDirectoryAndFile checks if a directory and file exist and creates them if they don't
-func EnsureDirectoryAndFile(path, filename string) error {
+func EnsureDirectoryAndFile(path, filename string) (string, error) {
 	// Check if directory exists
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		fmt.Println("Directory does not exist, creating it...")
 		if err := os.MkdirAll(path, os.ModePerm); err != nil {
-			return fmt.Errorf("failed to create directory: %w", err)
+			return "", fmt.Errorf("failed to create directory: %w", err)
 		}
 	}
 
@@ -84,10 +83,10 @@ func EnsureDirectoryAndFile(path, filename string) error {
 		fmt.Println("File does not exist, creating it...")
 		file, err := os.Create(filePath)
 		if err != nil {
-			return fmt.Errorf("failed to create file: %w", err)
+			return "", fmt.Errorf("failed to create file: %w", err)
 		}
 		defer file.Close()
 	}
 
-	return nil
+	return filePath, nil
 }
