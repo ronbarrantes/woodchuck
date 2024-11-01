@@ -8,9 +8,13 @@ import (
 
 func main() {
 	utils.LoadEnvs()
-	PORT := os.Getenv("PORT")
-	server := Server(PORT)
-	csv := Csv()
+	port := os.Getenv("PORT")
+	logDir := os.Getenv("LOG_DIR")
+	logFile := os.Getenv("LOG_FILE")
+
+	csv := Csv(logDir, logFile)
 	csv.InitCSV()
+
+	server := Server(port)
 	server.Run()
 }
