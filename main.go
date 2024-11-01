@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/ronbarrantes/woodchuck/utils"
@@ -13,7 +14,15 @@ func main() {
 	logFile := os.Getenv("LOG_FILE")
 
 	csv := Csv(logDir, logFile)
-	csv.InitCSV()
+	if err := csv.InitCSV(); err != nil {
+		panic(err)
+	}
+
+	if err := csv.DeleteCSV(); err != nil {
+		fmt.Errorf("There was an error deleting the file %w", err)
+	}
+
+	fmt.Println("fullpath:", csv.fullpath)
 
 	server := Server(port)
 	server.Run()

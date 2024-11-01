@@ -17,7 +17,6 @@ type CsvFile struct {
 type Writer struct {
 	Comma   rune // Field delimiter (set to ',' by NewWriter)
 	UseCRLF bool // True to use \r\n as the line terminator
-	// contains filtered or unexported fields
 }
 
 func Csv(p, f string) *CsvFile {
@@ -25,10 +24,6 @@ func Csv(p, f string) *CsvFile {
 		path:     p,
 		filename: f,
 	}
-}
-
-func (f *CsvFile) DeleteCSV() {
-	fmt.Println("Deleting...")
 }
 
 type CSVLogEntry struct {
@@ -39,7 +34,7 @@ type CSVLogEntry struct {
 	Message   string `csv:"message"`
 }
 
-func (f *CsvFile) InitCSV() {
+func (f *CsvFile) InitCSV() error {
 	// Initalize the CSV
 	fmt.Println("Initializing...")
 	// Get the name
@@ -48,21 +43,12 @@ func (f *CsvFile) InitCSV() {
 
 	fullpath, err := EnsureDirectoryAndFile(f.path, currentFileName)
 	if err != nil {
-		panic("File cannot be created")
+		return err
 	}
 
 	f.fullpath = fullpath
 	fmt.Println("fullPath", fullpath)
-}
-
-func (f *CsvFile) CheckFullPath() {
-	if f.fullpath == "" {
-
-		fmt.Println("No path made")
-		return
-	}
-
-	fmt.Println("the path is", f.fullpath)
+	return nil
 }
 
 // EnsureDirectoryAndFile checks if a directory and file exist and creates them if they don't
@@ -89,4 +75,20 @@ func EnsureDirectoryAndFile(path, filename string) (string, error) {
 	}
 
 	return filePath, nil
+}
+
+func (f *CsvFile) DeleteCSV() error {
+	fmt.Println("Deleting...")
+	if _, err := os.Stat(f.fullpath); os.IsNotExist(err) {
+		fmt.Println("Nothing to delete")
+		return fmt.Errorf("File %s doesn't exist", err)
+	}
+
+	if err := os.Remove(f.fullpath); err != nil {
+		return err
+	}
+
+	f.fullpath = ""
+
+	return nil
 }
