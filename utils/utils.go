@@ -11,11 +11,11 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// GenerateRandomId generates a random string of a fixed length.
+// GenerateRandomID generates a random string of a fixed length.
 // The generated string consists of digits and lowercase letters.
 // It returns the generated string and an error if the random bytes
 // could not be generated.
-func GenerateRandomId() (string, error) {
+func GenerateRandomID() (string, error) {
 	length := 10
 	keys := "1234567890abcdefghijklmnopqrstuvwxyz"
 	keyLen := byte(len(keys))
