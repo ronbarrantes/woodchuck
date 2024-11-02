@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/ronbarrantes/woodchuck/utils"
@@ -17,6 +18,7 @@ func main() {
 		panic(err)
 	}
 
+	fmt.Println(csv.fullpath)
 	server := Server(port)
 	server.Run()
 }

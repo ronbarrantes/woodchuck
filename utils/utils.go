@@ -67,12 +67,12 @@ func WriteJSON(w http.ResponseWriter, status int, v any) {
 }
 
 // EnsureDirectoryAndFile checks if a directory and file exist and creates them if they don't
-func EnsureDirectoryAndFile(path, filename string) (string, error) {
+func EnsureDirectoryAndFile(path, filename string) error {
 	// Check if directory exists
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		fmt.Println("Directory does not exist, creating it...")
 		if err := os.MkdirAll(path, os.ModePerm); err != nil {
-			return "", fmt.Errorf("failed to create directory: %w", err)
+			return fmt.Errorf("failed to create directory: %w", err)
 		}
 	}
 
@@ -84,12 +84,12 @@ func EnsureDirectoryAndFile(path, filename string) (string, error) {
 		fmt.Println("File does not exist, creating it...")
 		file, err := os.Create(filePath)
 		if err != nil {
-			return "", fmt.Errorf("failed to create file: %w", err)
+			return fmt.Errorf("failed to create file: %w", err)
 		}
 		defer file.Close()
 	}
 
-	return filePath, nil
+	return nil
 }
 
 // Remove File

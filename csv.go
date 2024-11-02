@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/ronbarrantes/woodchuck/utils"
@@ -41,12 +42,12 @@ func (f *CsvFile) InitCSV() error {
 	currDate := time.Now().Format("2006-01-02")
 	currentFileName := currDate + "-" + f.filename
 
-	fullpath, err := utils.EnsureDirectoryAndFile(f.path, currentFileName)
+	err := utils.EnsureDirectoryAndFile(f.path, currentFileName)
 	if err != nil {
 		return err
 	}
 
-	f.fullpath = fullpath
+	f.fullpath = filepath.Join(f.path, f.filename)
 	return nil
 }
 
