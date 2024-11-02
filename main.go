@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/ronbarrantes/woodchuck/utils"
@@ -17,12 +16,6 @@ func main() {
 	if err := csv.InitCSV(); err != nil {
 		panic(err)
 	}
-
-	if err := csv.DeleteCSV(); err != nil {
-		fmt.Errorf("There was an error deleting the file %w", err)
-	}
-
-	fmt.Println("fullpath:", csv.fullpath)
 
 	server := Server(port)
 	server.Run()
