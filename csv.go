@@ -95,17 +95,3 @@ func EnsureDirectoryAndFile(path, filename string) error {
 
 	return nil
 }
-
-// Remove File
-func RemoveFile(filepath string) error {
-	if _, err := os.Stat(filepath); os.IsNotExist(err) {
-		fmt.Println("Nothing to delete")
-		return fmt.Errorf("File %s doesn't exist", err)
-	}
-
-	if err := os.Remove(filepath); err != nil {
-		return err
-	}
-
-	return nil
-}

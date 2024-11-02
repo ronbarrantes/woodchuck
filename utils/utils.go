@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -64,4 +63,18 @@ func WriteJSON(w http.ResponseWriter, status int, v any) {
 	if err := json.NewEncoder(w).Encode(v); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+// Remove File
+func RemoveFile(filepath string) error {
+	if _, err := os.Stat(filepath); os.IsNotExist(err) {
+		fmt.Println("Nothing to delete")
+		return fmt.Errorf("File %s doesn't exist", err)
+	}
+
+	if err := os.Remove(filepath); err != nil {
+		return err
+	}
+
+	return nil
 }
