@@ -58,6 +58,5 @@ func (f *CsvFile) DeleteCSV() error {
 	}
 
 	f.fullpath = ""
-
 	return nil
 }
