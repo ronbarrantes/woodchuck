@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -82,6 +83,14 @@ func EnsureDirectoryAndFile(path, filename string) error {
 			return fmt.Errorf("failed to create file: %w", err)
 		}
 		defer file.Close()
+
+		// Write headers to the file
+		writer := csv.NewWriter(file)
+		headers := []string{"timestamp", "log_id", "level", "user_id", "message"}
+		if err := writer.Write(headers); err != nil {
+			return fmt.Errorf("failed to write headers: %w", err)
+		}
+		writer.Flush()
 	}
 
 	return nil
