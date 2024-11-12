@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -114,10 +115,15 @@ func (f *CsvFile) WriteToCSV(entry *CSVLogEntry) error {
 	if err != nil {
 		return fmt.Errorf("failed to open file: %w", err)
 	}
-	defer file.Close()
+	defer func() {
+		if cerr := file.Close(); cerr != nil && err == nil {
+			err = fmt.Errorf("failed to close file: %w", cerr)
+		}
+	}()
 
-	// Create a new CSV writer
-	writer := csv.NewWriter(file)
+	// Create a buffered writer
+	bufWriter := bufio.NewWriter(file)
+	writer := csv.NewWriter(bufWriter)
 
 	// Convert the entry to a slice of strings
 	record := []string{
@@ -135,10 +141,13 @@ func (f *CsvFile) WriteToCSV(entry *CSVLogEntry) error {
 
 	// Flush the writer
 	writer.Flush()
-
-	// Check for any error during the flush
 	if err := writer.Error(); err != nil {
 		return fmt.Errorf("failed to flush writer: %w", err)
+	}
+
+	// Flush the buffered writer
+	if err := bufWriter.Flush(); err != nil {
+		return fmt.Errorf("failed to flush buffer: %w", err)
 	}
 
 	return nil
