@@ -28,10 +28,6 @@ func main() {
 
 	csv := Csv(logDir, logFile)
 
-	// I want to check if file exist
-	// if it does then I'll extract the number
-	// if it doesn't I'll init it
-
 	_, err := csv.InitCSV()
 	if err != nil {
 		panic(err)
@@ -72,9 +68,7 @@ type LogEntry struct {
 
 // ### FUNCTIONS ###
 func Server(address string, csv *CsvFile) *ApiServer {
-
 	lastId, err := csv.ReadLastLogID()
-
 	if err != nil {
 		fmt.Println("Could not read last line")
 		lastId = 0
@@ -351,9 +345,7 @@ func (f *CsvFile) WriteToCSV(entry *CSVLogEntry) error {
 }
 
 func (f *CsvFile) ReadLastItemCSV() (*CSVLogEntry, error) {
-
 	file, err := os.Open(f.fullpath)
-	fmt.Println("====>>>>>>")
 	if err != nil {
 		log.Printf("failed to open file: %v", err)
 		return nil, fmt.Errorf("failed to open file: %w", err)
@@ -370,24 +362,10 @@ func (f *CsvFile) ReadLastItemCSV() (*CSVLogEntry, error) {
 	reader := csv.NewReader(bufReader)
 	var lastRecord []string
 
-	// TODO: fix this thing
-	cnt := 0
-
-	readAlll, err := reader.ReadAll()
-
-	if err != nil {
-		fmt.Println("failed to read record: ", err)
-		return nil, fmt.Errorf("failed to read record: %w", err)
-
-	}
-	fmt.Println("Println", readAlll)
-
-	fmt.Println("+++>>>>>>")
 	for {
 		record, err := reader.Read()
 
 		if err != nil {
-			fmt.Println("the int:", cnt)
 			if err.Error() == "EOF" {
 				break
 			}
@@ -396,11 +374,7 @@ func (f *CsvFile) ReadLastItemCSV() (*CSVLogEntry, error) {
 		}
 
 		lastRecord = record
-		cnt++
-		fmt.Printf("the int: %d", cnt)
 	}
-
-	fmt.Println("--->>", lastRecord)
 
 	intValue, err := strconv.Atoi(lastRecord[2])
 	if err != nil {
