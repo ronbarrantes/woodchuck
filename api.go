@@ -30,6 +30,7 @@ type LogIDGenerator struct {
 type ApiServer struct {
 	listenAddress string
 	logCounter    *LogIDGenerator
+	csvFile       *CsvFile
 }
 
 type LogLevel string
@@ -53,6 +54,7 @@ func Server(address string) *ApiServer {
 	return &ApiServer{
 		listenAddress: address,
 		logCounter:    NewLogCounter(),
+		csvFile:       &CsvFile{},
 	}
 }
 
@@ -128,6 +130,21 @@ func (s *ApiServer) handlePostLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	registeredLog, err := s.CreateLog(r.RemoteAddr, log.LogLevel, log.Message)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	logEntry := CSVLogEntry{
+		Timestamp: registeredLog.Timestamp.Format("2006-01-02T15:04:05Z"),
+		LogLevel:  string(registeredLog.LogLevel),
+		LogID:     registeredLog.LogID,
+		UserID:    registeredLog.UserID,
+		Message:   registeredLog.Message,
+	}
+
+	err = s.csvFile.WriteToCSV(&logEntry)
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

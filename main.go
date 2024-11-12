@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/ronbarrantes/woodchuck/utils"
@@ -14,11 +13,15 @@ func main() {
 	logFile := os.Getenv("LOG_FILE")
 
 	csv := Csv(logDir, logFile)
-	if err := csv.InitCSV(); err != nil {
+
+	_, err := csv.InitCSV()
+	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(csv.fullpath)
 	server := Server(port)
+
+	server.csvFile = csv
+
 	server.Run()
 }
