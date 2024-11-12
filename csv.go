@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -121,8 +122,8 @@ func (f *CsvFile) WriteToCSV(entry *CSVLogEntry) error {
 	// Convert the entry to a slice of strings
 	record := []string{
 		entry.Timestamp,
-		strings.ToUpper(fmt.Sprintf("%s", entry.LogLevel)),
-		fmt.Sprintf("%d", entry.LogID),
+		strings.ToUpper(entry.LogLevel),
+		strconv.Itoa(entry.LogID),
 		entry.UserID,
 		entry.Message,
 	}
