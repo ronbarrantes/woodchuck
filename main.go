@@ -352,7 +352,8 @@ func (f *CsvFile) WriteToCSV(entry *CSVLogEntry) error {
 
 func (f *CsvFile) ReadLastItemCSV() (*CSVLogEntry, error) {
 
-	file, err := os.OpenFile(f.fullpath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.Open(f.fullpath)
+	fmt.Println("====>>>>>>")
 	if err != nil {
 		log.Printf("failed to open file: %v", err)
 		return nil, fmt.Errorf("failed to open file: %w", err)
@@ -369,17 +370,34 @@ func (f *CsvFile) ReadLastItemCSV() (*CSVLogEntry, error) {
 	reader := csv.NewReader(bufReader)
 	var lastRecord []string
 
-	fmt.Println("About to read csv")
+	// TODO: fix this thing
+	cnt := 0
 
+	readAlll, err := reader.ReadAll()
+
+	if err != nil {
+		fmt.Println("failed to read record: ", err)
+		return nil, fmt.Errorf("failed to read record: %w", err)
+
+	}
+	fmt.Println("Println", readAlll)
+
+	fmt.Println("+++>>>>>>")
 	for {
 		record, err := reader.Read()
+
 		if err != nil {
+			fmt.Println("the int:", cnt)
 			if err.Error() == "EOF" {
 				break
 			}
+			fmt.Println("failed to read record: ", err)
 			return nil, fmt.Errorf("failed to read record: %w", err)
 		}
+
 		lastRecord = record
+		cnt++
+		fmt.Printf("the int: %d", cnt)
 	}
 
 	fmt.Println("--->>", lastRecord)
@@ -404,6 +422,7 @@ func (f *CsvFile) ReadLastLogID() (int, error) {
 	lastEntry, err := f.ReadLastItemCSV()
 
 	if err != nil {
+		log.Printf("There was an error %v", err)
 		return 0, fmt.Errorf("Cannot get last entry: %w", err)
 	}
 
