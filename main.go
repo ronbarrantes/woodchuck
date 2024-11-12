@@ -70,7 +70,7 @@ type LogEntry struct {
 func Server(address string, csv *CsvFile) *ApiServer {
 	lastId, err := csv.ReadLastLogID()
 	if err != nil {
-		fmt.Println("First id will be initalize to 0")
+		fmt.Println("First log id will be initalize to 0")
 		lastId = 0
 	}
 
