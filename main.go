@@ -37,8 +37,7 @@ func main() {
 		panic(err)
 	}
 
-	server := Server(port)
-	server.csvFile = csv
+	server := Server(port, csv)
 	server.Run()
 }
 
@@ -72,11 +71,9 @@ type LogEntry struct {
 }
 
 // ### FUNCTIONS ###
+func Server(address string, csv *CsvFile) *ApiServer {
 
-func Server(address string) *ApiServer {
-	csvFile := &CsvFile{}
-
-	lastId, err := csvFile.ReadLastLogID()
+	lastId, err := csv.ReadLastLogID()
 
 	if err != nil {
 		fmt.Println("Could not read last line")
@@ -86,7 +83,7 @@ func Server(address string) *ApiServer {
 	return &ApiServer{
 		listenAddress: address,
 		logCounter:    NewLogCounter(lastId),
-		csvFile:       csvFile,
+		csvFile:       csv,
 	}
 }
 
@@ -221,11 +218,12 @@ type Writer struct {
 func Csv(p, f string) *CsvFile {
 	currDate := time.Now().Format("2006-01-02")
 	currentFileName := currDate + "-" + f
+	fullpath := filepath.Join(p, currentFileName)
 
 	return &CsvFile{
 		path:     p,
 		filename: f,
-		fullpath: filepath.Join(p, currentFileName),
+		fullpath: fullpath,
 	}
 }
 
@@ -354,24 +352,17 @@ func (f *CsvFile) WriteToCSV(entry *CSVLogEntry) error {
 
 func (f *CsvFile) ReadLastItemCSV() (*CSVLogEntry, error) {
 
-	// Open the file in append mode, create if it doesn't exist
-
-	fmt.Println("------->>>>", f.fullpath)
 	file, err := os.OpenFile(f.fullpath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Printf("failed to open file: %v", err)
 		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
 
-	fmt.Println("Get last entry")
-
 	defer func() {
 		if cerr := file.Close(); cerr != nil && err == nil {
 			err = fmt.Errorf("failed to close file: %w", cerr)
 		}
 	}()
-
-	fmt.Println("Get last entry")
 
 	// Create a buffered writer
 	bufReader := bufio.NewReader(file)
