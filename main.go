@@ -70,7 +70,7 @@ type LogEntry struct {
 func Server(address string, csv *CsvFile) *ApiServer {
 	lastId, err := csv.ReadLastLogID()
 	if err != nil {
-		fmt.Println("Could not read last line")
+		fmt.Println("First id will be initalize to 0")
 		lastId = 0
 	}
 
@@ -396,7 +396,7 @@ func (f *CsvFile) ReadLastLogID() (int, error) {
 	lastEntry, err := f.ReadLastItemCSV()
 
 	if err != nil {
-		log.Printf("There was an error %v", err)
+		//log.Printf("There was an error %v", err)
 		return 0, fmt.Errorf("Cannot get last entry: %w", err)
 	}
 
