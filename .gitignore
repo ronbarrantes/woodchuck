@@ -1,5 +1,9 @@
+.env*
+!.env.sample
+
 /temp
 /tmp
+/logs
 
 # Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,macos,windows,linux,vim,netbeans,go
 # Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,macos,windows,linux,vim,netbeans,go
