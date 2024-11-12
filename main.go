@@ -20,21 +20,33 @@ import (
 	"github.com/ronbarrantes/woodchuck/utils"
 )
 
-func main() {
-	utils.LoadEnvs()
-	port := os.Getenv("PORT")
-	logDir := os.Getenv("LOG_DIR")
-	logFile := os.Getenv("LOG_FILE")
+type Config struct {
+	Port        string
+	LogDir      string
+	LogFilename string
+}
 
-	csv := Csv(logDir, logFile)
+func main() {
+	config := loadConfig()
+
+	csv := Csv(config.LogDir, config.LogFilename)
 
 	_, err := csv.InitCSV()
 	if err != nil {
 		panic(err)
 	}
 
-	server := Server(port, csv)
+	server := Server(config.Port, csv)
 	server.Run()
+}
+
+func loadConfig() Config {
+	utils.LoadEnvs()
+	return Config{
+		Port:        os.Getenv("PORT"),
+		LogDir:      os.Getenv("LOG_DIR"),
+		LogFilename: os.Getenv("LOG_FILE"),
+	}
 }
 
 // ### CONSTS AND VARS ###
@@ -117,6 +129,7 @@ func (l *LogLevel) UnmarshalJSON(data []byte) error {
 }
 
 func (s *ApiServer) Run() {
+	fmt.Printf("Listening to %s\n", s.listenAddress)
 	corsHandler := handlers.CORS(
 		handlers.AllowedOrigins([]string{"*"}),
 		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
@@ -126,9 +139,9 @@ func (s *ApiServer) Run() {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/", s.handleMainPage)
-	router.HandleFunc("/v1/api/log", s.handlePath)
+	router.HandleFunc("/api/v1/log", s.handlePath)
+	// .Methods("POST")
 
-	fmt.Printf("Listening to %s\n", s.listenAddress)
 	log.Fatal(http.ListenAndServe("0.0.0.0:"+s.listenAddress, corsHandler(router)))
 }
 
@@ -307,8 +320,8 @@ func (f *CsvFile) WriteToCSV(entry *CSVLogEntry) error {
 		return fmt.Errorf("failed to open file: %w", err)
 	}
 	defer func() {
-		if cerr := file.Close(); cerr != nil && err == nil {
-			err = fmt.Errorf("failed to close file: %w", cerr)
+		if closeErr := file.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
 	}()
 
@@ -347,49 +360,28 @@ func (f *CsvFile) WriteToCSV(entry *CSVLogEntry) error {
 func (f *CsvFile) ReadLastItemCSV() (*CSVLogEntry, error) {
 	file, err := os.Open(f.fullpath)
 	if err != nil {
-		log.Printf("failed to open file: %v", err)
 		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
+	defer file.Close()
 
-	defer func() {
-		if cerr := file.Close(); cerr != nil && err == nil {
-			err = fmt.Errorf("failed to close file: %w", cerr)
-		}
-	}()
-
-	// Create a buffered writer
-	bufReader := bufio.NewReader(file)
-	reader := csv.NewReader(bufReader)
-	var lastRecord []string
-
-	for {
-		record, err := reader.Read()
-
-		if err != nil {
-			if err.Error() == "EOF" {
-				break
-			}
-			fmt.Println("failed to read record: ", err)
-			return nil, fmt.Errorf("failed to read record: %w", err)
-		}
-
-		lastRecord = record
+	records, err := csv.NewReader(file).ReadAll()
+	if err != nil || len(records) < 2 {
+		return nil, fmt.Errorf("no records found: %w", err)
 	}
+	lastRecord := records[len(records)-1]
 
-	intValue, err := strconv.Atoi(lastRecord[2])
+	logID, err := strconv.Atoi(lastRecord[2])
 	if err != nil {
-		return nil, fmt.Errorf("failed to read record: %w", err)
+		return nil, fmt.Errorf("invalid log ID: %w", err)
 	}
 
-	csvLogEntry := &CSVLogEntry{
+	return &CSVLogEntry{
 		Timestamp: lastRecord[0],
 		LogLevel:  lastRecord[1],
-		LogID:     intValue,
+		LogID:     logID,
 		UserID:    lastRecord[3],
 		Message:   lastRecord[4],
-	}
-
-	return csvLogEntry, nil
+	}, nil
 }
 
 func (f *CsvFile) ReadLastLogID() (int, error) {
