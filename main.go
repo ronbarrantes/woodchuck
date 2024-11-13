@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -17,8 +16,6 @@ type Config struct {
 }
 
 func main() {
-	fmt.Println("WORKING UP HERE")
-
 	config := loadConfig()
 	db := NewDBFile(config.DBDir, config.DBFilename)
 
