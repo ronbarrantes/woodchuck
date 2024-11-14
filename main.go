@@ -40,10 +40,8 @@ func main() {
 func loadConfig() Config {
 	utils.LoadEnvs()
 	return Config{
-		Port:        os.Getenv("PORT"),
-		LogDir:      os.Getenv("LOG_DIR"),
-		LogFilename: os.Getenv("LOG_FILE"),
-		DBDir:       os.Getenv("DB_DIR"),
-		DBFilename:  os.Getenv("DB_FILE"),
+		Port:       os.Getenv("PORT"),
+		DBDir:      os.Getenv("DB_DIR"),
+		DBFilename: os.Getenv("DB_FILE"),
 	}
 }

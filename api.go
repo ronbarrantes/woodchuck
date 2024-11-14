@@ -40,17 +40,9 @@ type LogEntry struct {
 
 // ### FUNCTIONS ###
 func Server(address string, db *DBFile) *ApiServer {
-	// lastId, err := csv.ReadLastLogID()
-	// if err != nil {
-	// 	fmt.Println("First log id will be initalize to 0")
-	// 	lastId = 0
-	// }
-
-	// lastId := 0
 	return &ApiServer{
 		listenAddress: address,
-		// logCounter:    NewLogCounter(lastId),
-		db: db,
+		db:            db,
 	}
 }
 

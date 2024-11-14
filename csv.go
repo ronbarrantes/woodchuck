@@ -55,8 +55,6 @@ func CreateFullPath(path, name string) string {
 func (f *CsvFile) InitCSV() (*csv.Writer, error) {
 	// Initalize the CSV
 	fmt.Println("Initializing...")
-	// Get the name
-
 	csvWriter, err := f.EnsureDirectoryAndFile()
 	if err != nil {
 		return nil, err
@@ -191,7 +189,6 @@ func (f *CsvFile) ReadLastLogID() (int, error) {
 	lastEntry, err := f.ReadLastItemCSV()
 
 	if err != nil {
-		//log.Printf("There was an error %v", err)
 		return 0, fmt.Errorf("Cannot get last entry: %w", err)
 	}
 
