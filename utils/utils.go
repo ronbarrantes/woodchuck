@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/joho/godotenv"
 )
@@ -77,4 +78,34 @@ func RemoveFile(filepath string) error {
 	}
 
 	return nil
+}
+
+// Ensure that Dir is created
+func EnsureDir(path string) error {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		fmt.Println("Directory does not exist, creating it...")
+		if err := os.MkdirAll(path, os.ModePerm); err != nil {
+			return fmt.Errorf("failed to create directory: %w", err)
+		}
+	}
+
+	return nil
+}
+
+type LogIDGenerator struct {
+	ID int
+	Mu sync.Mutex
+}
+
+func NewLogCounter(id int) *LogIDGenerator {
+	return &LogIDGenerator{
+		ID: id,
+	}
+}
+
+func (id *LogIDGenerator) Inc() int {
+	id.Mu.Lock()
+	defer id.Mu.Unlock()
+	id.ID++
+	return id.ID
 }
