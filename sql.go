@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"path/filepath"
-	"time"
 
 	"github.com/ronbarrantes/woodchuck/utils"
 	"gorm.io/driver/sqlite"
@@ -29,10 +28,9 @@ func NewDBFile(p, f string) *DBFile {
 
 type DBLogModel struct {
 	gorm.Model
-	Timestamp time.Time
-	LogLevel  string
-	UserID    string
-	Message   string
+	LogLevel string
+	UserID   string
+	Message  string
 }
 
 func (f *DBFile) InitDB() error {
@@ -69,13 +67,16 @@ func (f *DBFile) WriteLog(log DBLogModel) error {
 }
 
 // Read the logs
-func (f *DBFile) ReadLogs() (*gorm.DB, error) {
+func (f *DBFile) ReadLogs() ([]DBLogModel, error) {
 	if f.db == nil {
 		return nil, fmt.Errorf("database not initialized")
 	}
 
 	var logs []DBLogModel
 	result := f.db.Find(&logs)
+	if result.Error != nil {
+		return nil, result.Error
+	}
 
-	return result, nil
+	return logs, nil
 }

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/gorilla/handlers"
@@ -22,14 +21,9 @@ const (
 )
 
 // ### TYPES ###
-type LogIDGenerator struct {
-	ID int
-	mu sync.Mutex
-}
 
 type ApiServer struct {
 	listenAddress string
-	logCounter    *LogIDGenerator
 	db            *DBFile
 	// csvFile       *CsvFile
 }
@@ -52,27 +46,15 @@ func Server(address string, db *DBFile) *ApiServer {
 	// 	lastId = 0
 	// }
 
-	lastId := 0
+	// lastId := 0
 	return &ApiServer{
 		listenAddress: address,
-		logCounter:    NewLogCounter(lastId),
-		db:            db,
+		// logCounter:    NewLogCounter(lastId),
+		db: db,
 	}
 }
 
 // ### METHODS ###
-func NewLogCounter(id int) *LogIDGenerator {
-	return &LogIDGenerator{
-		ID: id,
-	}
-}
-
-func (id *LogIDGenerator) inc() int {
-	id.mu.Lock()
-	defer id.mu.Unlock()
-	id.ID++
-	return id.ID
-}
 
 func (l LogLevel) IsValid() bool {
 	switch l {
@@ -118,10 +100,25 @@ func (s *ApiServer) handleMainPage(w http.ResponseWriter, r *http.Request) {
 
 func (s *ApiServer) handlePath(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
+	case "GET":
+		s.handleGetLog(w, r)
 	case "POST":
 		s.handlePostLog(w, r)
 	default:
 		http.Error(w, fmt.Sprintf("Method not allowed: %s", r.Method), http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *ApiServer) handleGetLog(w http.ResponseWriter, _ *http.Request) {
+	results, err := s.db.ReadLogs()
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	for _, log := range results {
+		fmt.Fprintf(w, "Log: %v\n", log)
 	}
 }
 
@@ -144,35 +141,23 @@ func (s *ApiServer) handlePostLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// logEntry := CSVLogEntry{
-	// 	Timestamp: registeredLog.Timestamp.Format("2006-01-02T15:04:05Z"),
-	// 	LogLevel:  string(registeredLog.LogLevel),
-	// 	LogID:     registeredLog.LogID,
-	// 	UserID:    registeredLog.UserID,
-	// 	Message:   registeredLog.Message,
-	// }
-
-	// err = s.csvFile.WriteToCSV(&logEntry)
-
-	// if err != nil {
-	// 	http.Error(w, err.Error(), http.StatusBadRequest)
-	// 	return
-	// }
+	if err := s.db.WriteLog(registeredLog); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	utils.WriteJSON(w, http.StatusOK, registeredLog)
 }
 
-func (s *ApiServer) CreateLog(uid string, lvl LogLevel, msg string) (LogEntry, error) {
+func (s *ApiServer) CreateLog(uid string, lvl LogLevel, msg string) (DBLogModel, error) {
 	if lvl == "" || uid == "" || msg == "" {
 		err := errors.New("cannot create log entry")
-		return LogEntry{}, err
+		return DBLogModel{}, err
 	}
 
-	return LogEntry{
-		Timestamp: time.Now(),
-		LogLevel:  lvl,
-		UserID:    uid,
-		Message:   msg,
-		LogID:     s.logCounter.inc(),
+	return DBLogModel{
+		LogLevel: string(lvl),
+		UserID:   uid,
+		Message:  msg,
 	}, nil
 }

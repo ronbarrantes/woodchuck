@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/joho/godotenv"
 )
@@ -89,4 +90,22 @@ func EnsureDir(path string) error {
 	}
 
 	return nil
+}
+
+type LogIDGenerator struct {
+	ID int
+	Mu sync.Mutex
+}
+
+func NewLogCounter(id int) *LogIDGenerator {
+	return &LogIDGenerator{
+		ID: id,
+	}
+}
+
+func (id *LogIDGenerator) Inc() int {
+	id.Mu.Lock()
+	defer id.Mu.Unlock()
+	id.ID++
+	return id.ID
 }
