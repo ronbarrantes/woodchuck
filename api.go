@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/gorilla/handlers"
@@ -25,7 +26,6 @@ const (
 type ApiServer struct {
 	listenAddress string
 	db            *DBFile
-	// csvFile       *CsvFile
 }
 
 type LogLevel string
@@ -47,7 +47,6 @@ func Server(address string, db *DBFile) *ApiServer {
 }
 
 // ### METHODS ###
-
 func (l LogLevel) IsValid() bool {
 	switch l {
 	case LogLevelInfo, LogLevelWarn, LogLevelError:
@@ -87,7 +86,10 @@ func (s *ApiServer) Run() {
 }
 
 func (s *ApiServer) handleMainPage(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Woodchuck")
+	filePath := filepath.Join("public", "index.html")
+
+	http.ServeFile(w, r, filePath)
+
 }
 
 func (s *ApiServer) handlePath(w http.ResponseWriter, r *http.Request) {
