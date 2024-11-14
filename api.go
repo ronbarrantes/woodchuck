@@ -30,7 +30,8 @@ type LogIDGenerator struct {
 type ApiServer struct {
 	listenAddress string
 	logCounter    *LogIDGenerator
-	csvFile       *CsvFile
+	db            *DBFile
+	// csvFile       *CsvFile
 }
 
 type LogLevel string
@@ -44,7 +45,7 @@ type LogEntry struct {
 }
 
 // ### FUNCTIONS ###
-func Server(address string) *ApiServer {
+func Server(address string, db *DBFile) *ApiServer {
 	// lastId, err := csv.ReadLastLogID()
 	// if err != nil {
 	// 	fmt.Println("First log id will be initalize to 0")
@@ -55,6 +56,7 @@ func Server(address string) *ApiServer {
 	return &ApiServer{
 		listenAddress: address,
 		logCounter:    NewLogCounter(lastId),
+		db:            db,
 	}
 }
 

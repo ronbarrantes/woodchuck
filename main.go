@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"time"
 
 	"github.com/ronbarrantes/woodchuck/utils"
 )
@@ -24,19 +23,18 @@ func main() {
 	}
 
 	//	Example of writing to the database
-	logEntry := DBLogModel{
-		Timestamp: time.Now(),
-		LogLevel:  "info",
-		LogID:     1,
-		UserID:    "user123",
-		Message:   "This is a log message",
-	}
+	// logEntry := DBLogModel{
+	// 	Timestamp: time.Now(),
+	// 	LogLevel:  "info",
+	// 	UserID:    "user123",
+	// 	Message:   "This is a log message",
+	// }
 
-	if err := db.WriteLog(logEntry); err != nil {
-		panic(err)
-	}
+	// if err := db.WriteLog(logEntry); err != nil {
+	// 	panic(err)
+	// }
 
-	server := Server(config.Port)
+	server := Server(config.Port, db)
 	server.Run()
 }
 

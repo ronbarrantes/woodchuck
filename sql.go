@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/ronbarrantes/woodchuck/utils"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -17,6 +17,7 @@ type DBFile struct {
 	db       *gorm.DB
 }
 
+// Creates a new db file
 func NewDBFile(p, f string) *DBFile {
 	fullpath := filepath.Join(p, f)
 	return &DBFile{
@@ -30,14 +31,13 @@ type DBLogModel struct {
 	gorm.Model
 	Timestamp time.Time
 	LogLevel  string
-	LogID     int
 	UserID    string
 	Message   string
 }
 
 func (f *DBFile) InitDB() error {
 	// Ensure the database directory exists
-	if err := EnsureDir(f.path); err != nil {
+	if err := utils.EnsureDir(f.path); err != nil {
 		panic("Fail to create path")
 	}
 
@@ -58,6 +58,7 @@ func (f *DBFile) InitDB() error {
 	return nil
 }
 
+// Write to the logs
 func (f *DBFile) WriteLog(log DBLogModel) error {
 	if f.db == nil {
 		return fmt.Errorf("database not initialized")
@@ -67,14 +68,14 @@ func (f *DBFile) WriteLog(log DBLogModel) error {
 	return result.Error
 }
 
-func EnsureDir(path string) error {
-	// Check if directory exists
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		fmt.Println("Directory does not exist, creating it...")
-		if err := os.MkdirAll(path, os.ModePerm); err != nil {
-			return fmt.Errorf("failed to create directory: %w", err)
-		}
+// Read the logs
+func (f *DBFile) ReadLogs() (*gorm.DB, error) {
+	if f.db == nil {
+		return nil, fmt.Errorf("database not initialized")
 	}
 
-	return nil
+	var logs []DBLogModel
+	result := f.db.Find(&logs)
+
+	return result, nil
 }
