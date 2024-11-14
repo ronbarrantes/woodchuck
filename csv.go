@@ -20,11 +20,6 @@ type CsvFile struct {
 	fullpath string
 }
 
-// type Writer struct {
-// 	Comma   rune // Field delimiter (set to ',' by NewWriter)
-// 	UseCRLF bool // True to use \r\n as the line terminator
-// }
-
 func NewCsvFile(p, f string) *CsvFile {
 	currDate := time.Now().Format("2006-01-02")
 	currentFileName := currDate + "-" + f
@@ -53,7 +48,6 @@ func CreateFullPath(path, name string) string {
 }
 
 func (f *CsvFile) InitCSV() (*csv.Writer, error) {
-	// Initalize the CSV
 	fmt.Println("Initializing...")
 	csvWriter, err := f.EnsureDirectoryAndFile()
 	if err != nil {
