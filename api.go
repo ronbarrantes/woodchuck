@@ -79,8 +79,8 @@ func (s *ApiServer) Run() {
 
 	// Serve static files from the "static" directory
 	staticFileDirectory := http.Dir("./static/")
-	staticFileHandler := http.StripPrefix("/static/", http.FileServer(staticFileDirectory))
-	router.PathPrefix("/static/").Handler(staticFileHandler)
+	staticFileHandler := http.StripPrefix("/", http.FileServer(staticFileDirectory))
+	router.PathPrefix("/").Handler(staticFileHandler)
 
 	router.HandleFunc("/", s.handleMainPage)
 	router.HandleFunc("/api/v1/log", s.handlePath)
@@ -88,11 +88,6 @@ func (s *ApiServer) Run() {
 
 	log.Fatal(http.ListenAndServe("0.0.0.0:"+s.listenAddress, corsHandler(router)))
 }
-
-// func (s *ApiServer) handleStaticFiles() {
-// 	fs := http.FileServer(http.Dir("public"))
-// 	http.Handle("/", http.StripPrefix("/public", fs))
-// }
 
 func (s *ApiServer) handleMainPage(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "./static/index.html")
