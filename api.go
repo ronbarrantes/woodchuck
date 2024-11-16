@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"path/filepath"
 	"time"
 
 	"github.com/gorilla/handlers"
@@ -78,6 +77,11 @@ func (s *ApiServer) Run() {
 
 	router := mux.NewRouter()
 
+	// Serve static files from the "static" directory
+	staticFileDirectory := http.Dir("./static/")
+	staticFileHandler := http.StripPrefix("/static/", http.FileServer(staticFileDirectory))
+	router.PathPrefix("/static/").Handler(staticFileHandler)
+
 	router.HandleFunc("/", s.handleMainPage)
 	router.HandleFunc("/api/v1/log", s.handlePath)
 	// .Methods("POST")
@@ -85,11 +89,13 @@ func (s *ApiServer) Run() {
 	log.Fatal(http.ListenAndServe("0.0.0.0:"+s.listenAddress, corsHandler(router)))
 }
 
+// func (s *ApiServer) handleStaticFiles() {
+// 	fs := http.FileServer(http.Dir("public"))
+// 	http.Handle("/", http.StripPrefix("/public", fs))
+// }
+
 func (s *ApiServer) handleMainPage(w http.ResponseWriter, r *http.Request) {
-	filePath := filepath.Join("public", "index.html")
-
-	http.ServeFile(w, r, filePath)
-
+	http.ServeFile(w, r, "./static/index.html")
 }
 
 func (s *ApiServer) handlePath(w http.ResponseWriter, r *http.Request) {
