@@ -23,7 +23,7 @@ func main() {
 	}
 
 	//	Example of writing to the database
-	logEntry := DBLogModel{
+	logEntry := Log{
 		LogLevel: "info",
 		UserID:   "user123",
 		Message:  "This is a log message",

@@ -5,8 +5,13 @@ console.log("from main.js");
 
 const getLogs = async () => {
   const apiCall = await fetch("/api/v1/logs");
-  const data = await apiCall.text();
-  console.log("TEXT--->", data);
+  data = (await apiCall.json()).map((log) => {
+    const date = new Date(log.timestamp);
+    timestamp = date.toISOString();
+    return { ...log, timestamp };
+  });
+
+  console.log(data);
 };
 
 getLogs();

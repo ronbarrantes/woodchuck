@@ -15,38 +15,38 @@ import (
 
 // ### CONSTS AND VARS ###
 const (
-	LogLevelInfo  LogLevel = "info"
-	LogLevelWarn  LogLevel = "warn"
-	LogLevelError LogLevel = "error"
+	LogLevelInfo  JSONLogLevel = "info"
+	LogLevelWarn  JSONLogLevel = "warn"
+	LogLevelError JSONLogLevel = "error"
 )
 
 // ### TYPES ###
 
-type ApiServer struct {
+type APIServer struct {
 	listenAddress string
 	db            *DBFile
 }
 
-type LogLevel string
+type JSONLogLevel string
 
 type LogEntry struct {
-	Timestamp time.Time `json:"timestamp"`
-	LogID     int       `json:"log_id"`
-	LogLevel  LogLevel  `json:"level"` // "error", "warning", "log"
-	UserID    string    `json:"user_id"`
-	Message   string    `json:"message"`
+	Timestamp time.Time    `json:"timestamp"`
+	LogID     int          `json:"log_id"`
+	LogLevel  JSONLogLevel `json:"level"` // "error", "warning", "log"
+	UserID    string       `json:"user_id"`
+	Message   string       `json:"message"`
 }
 
 // ### FUNCTIONS ###
-func Server(address string, db *DBFile) *ApiServer {
-	return &ApiServer{
+func Server(address string, db *DBFile) *APIServer {
+	return &APIServer{
 		listenAddress: address,
 		db:            db,
 	}
 }
 
 // ### METHODS ###
-func (l LogLevel) IsValid() bool {
+func (l JSONLogLevel) IsValid() bool {
 	switch l {
 	case LogLevelInfo, LogLevelWarn, LogLevelError:
 		return true
@@ -55,19 +55,19 @@ func (l LogLevel) IsValid() bool {
 	}
 }
 
-func (l *LogLevel) UnmarshalJSON(data []byte) error {
+func (l *JSONLogLevel) UnmarshalJSON(data []byte) error {
 	var level string
 	if err := json.Unmarshal(data, &level); err != nil {
 		return err
 	}
-	*l = LogLevel(level)
+	*l = JSONLogLevel(level)
 	if !l.IsValid() {
 		return fmt.Errorf("invalid log level: %s", level)
 	}
 	return nil
 }
 
-func (s *ApiServer) Run() {
+func (s *APIServer) Run() {
 	fmt.Printf("Listening to %s\n", s.listenAddress)
 	corsHandler := handlers.CORS(
 		handlers.AllowedOrigins([]string{"*"}),
@@ -88,11 +88,11 @@ func (s *ApiServer) Run() {
 	log.Fatal(http.ListenAndServe("0.0.0.0:"+s.listenAddress, corsHandler(router)))
 }
 
-func (s *ApiServer) handleMainPage(w http.ResponseWriter, r *http.Request) {
+func (s *APIServer) handleMainPage(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "./static/index.html")
 }
 
-func (s *ApiServer) handlePath(w http.ResponseWriter, r *http.Request) {
+func (s *APIServer) handlePath(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		s.handleGetLog(w, r)
@@ -104,7 +104,7 @@ func (s *ApiServer) handlePath(w http.ResponseWriter, r *http.Request) {
 }
 
 // Gets all the logs
-func (s *ApiServer) handleGetLog(w http.ResponseWriter, _ *http.Request) {
+func (s *APIServer) handleGetLog(w http.ResponseWriter, _ *http.Request) {
 	results, err := s.db.ReadLogs()
 
 	if err != nil {
@@ -117,9 +117,9 @@ func (s *ApiServer) handleGetLog(w http.ResponseWriter, _ *http.Request) {
 	for _, log := range results {
 
 		logs = append(logs, LogEntry{
-			Timestamp: log.CreatedAt,
+			Timestamp: log.CreatedAt.UTC(),
 			UserID:    log.UserID,
-			LogLevel:  LogLevel(log.LogLevel),
+			LogLevel:  JSONLogLevel(log.LogLevel),
 			LogID:     int(log.ID),
 			Message:   log.Message,
 		})
@@ -128,7 +128,7 @@ func (s *ApiServer) handleGetLog(w http.ResponseWriter, _ *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, logs)
 }
 
-func (s *ApiServer) handlePostLog(w http.ResponseWriter, r *http.Request) {
+func (s *APIServer) handlePostLog(w http.ResponseWriter, r *http.Request) {
 	var log LogEntry
 
 	if err := json.NewDecoder(r.Body).Decode(&log); err != nil {
@@ -155,13 +155,13 @@ func (s *ApiServer) handlePostLog(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, registeredLog)
 }
 
-func (s *ApiServer) CreateLog(uid string, lvl LogLevel, msg string) (DBLogModel, error) {
+func (s *APIServer) CreateLog(uid string, lvl JSONLogLevel, msg string) (Log, error) {
 	if lvl == "" || uid == "" || msg == "" {
 		err := errors.New("cannot create log entry")
-		return DBLogModel{}, err
+		return Log{}, err
 	}
 
-	return DBLogModel{
+	return Log{
 		LogLevel: string(lvl),
 		UserID:   uid,
 		Message:  msg,

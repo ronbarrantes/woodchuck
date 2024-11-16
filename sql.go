@@ -26,7 +26,7 @@ func NewDBFile(p, f string) *DBFile {
 	}
 }
 
-type DBLogModel struct {
+type Log struct {
 	gorm.Model
 	LogLevel string
 	UserID   string
@@ -48,7 +48,7 @@ func (f *DBFile) InitDB() error {
 	}
 
 	// Migrate the schema
-	if err := db.AutoMigrate(&DBLogModel{}); err != nil {
+	if err := db.AutoMigrate(&Log{}); err != nil {
 		return fmt.Errorf("failed to migrate database: %w", err)
 	}
 
@@ -57,7 +57,7 @@ func (f *DBFile) InitDB() error {
 }
 
 // Write to the logs
-func (f *DBFile) WriteLog(log DBLogModel) error {
+func (f *DBFile) WriteLog(log Log) error {
 	if f.db == nil {
 		return fmt.Errorf("database not initialized")
 	}
@@ -67,12 +67,12 @@ func (f *DBFile) WriteLog(log DBLogModel) error {
 }
 
 // Read the logs
-func (f *DBFile) ReadLogs() ([]DBLogModel, error) {
+func (f *DBFile) ReadLogs() ([]Log, error) {
 	if f.db == nil {
 		return nil, fmt.Errorf("database not initialized")
 	}
 
-	var logs []DBLogModel
+	var logs []Log
 	result := f.db.Find(&logs)
 	if result.Error != nil {
 		return nil, result.Error
