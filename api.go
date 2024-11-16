@@ -78,13 +78,12 @@ func (s *ApiServer) Run() {
 	router := mux.NewRouter()
 
 	// Serve static files from the "static" directory
+	router.HandleFunc("/", s.handleMainPage)
+	router.HandleFunc("/api/v1/logs", s.handlePath) // .Methods("POST")
+
 	staticFileDirectory := http.Dir("./static/")
 	staticFileHandler := http.StripPrefix("/", http.FileServer(staticFileDirectory))
 	router.PathPrefix("/").Handler(staticFileHandler)
-
-	router.HandleFunc("/", s.handleMainPage)
-	router.HandleFunc("/api/v1/log", s.handlePath)
-	// .Methods("POST")
 
 	log.Fatal(http.ListenAndServe("0.0.0.0:"+s.listenAddress, corsHandler(router)))
 }
@@ -104,6 +103,7 @@ func (s *ApiServer) handlePath(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Gets all the logs
 func (s *ApiServer) handleGetLog(w http.ResponseWriter, _ *http.Request) {
 	results, err := s.db.ReadLogs()
 
@@ -112,9 +112,20 @@ func (s *ApiServer) handleGetLog(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 
+	var logs []LogEntry
+
 	for _, log := range results {
-		fmt.Fprintf(w, "Log: %v\n", log)
+
+		logs = append(logs, LogEntry{
+			Timestamp: log.CreatedAt,
+			UserID:    log.UserID,
+			LogLevel:  LogLevel(log.LogLevel),
+			LogID:     int(log.ID),
+			Message:   log.Message,
+		})
 	}
+
+	utils.WriteJSON(w, http.StatusOK, logs)
 }
 
 func (s *ApiServer) handlePostLog(w http.ResponseWriter, r *http.Request) {
