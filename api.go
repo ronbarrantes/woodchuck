@@ -25,7 +25,6 @@ const (
 type ApiServer struct {
 	listenAddress string
 	db            *DBFile
-	// csvFile       *CsvFile
 }
 
 type LogLevel string
@@ -47,7 +46,6 @@ func Server(address string, db *DBFile) *ApiServer {
 }
 
 // ### METHODS ###
-
 func (l LogLevel) IsValid() bool {
 	switch l {
 	case LogLevelInfo, LogLevelWarn, LogLevelError:
@@ -79,6 +77,11 @@ func (s *ApiServer) Run() {
 
 	router := mux.NewRouter()
 
+	// Serve static files from the "static" directory
+	staticFileDirectory := http.Dir("./static/")
+	staticFileHandler := http.StripPrefix("/", http.FileServer(staticFileDirectory))
+	router.PathPrefix("/").Handler(staticFileHandler)
+
 	router.HandleFunc("/", s.handleMainPage)
 	router.HandleFunc("/api/v1/log", s.handlePath)
 	// .Methods("POST")
@@ -87,7 +90,7 @@ func (s *ApiServer) Run() {
 }
 
 func (s *ApiServer) handleMainPage(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Woodchuck")
+	http.ServeFile(w, r, "./static/index.html")
 }
 
 func (s *ApiServer) handlePath(w http.ResponseWriter, r *http.Request) {
