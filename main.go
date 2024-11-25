@@ -59,7 +59,7 @@ func loadConfig() Config {
 	}
 }
 
-// API
+// API // in api.go
 // ### CONSTS AND VARS ###
 const (
 	LogLevelInfo  JSONLogLevel = "info"
@@ -215,8 +215,7 @@ func (s *APIServer) CreateLog(uid string, lvl JSONLogLevel, msg string) (Log, er
 	}, nil
 }
 
-/// SQL
-
+// / SQL in sql.go
 type DBFile struct {
 	file     string
 	path     string
