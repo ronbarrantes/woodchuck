@@ -14,4 +14,4 @@ const getLogs = async () => {
   console.log(data);
 };
 
-getLogs();
+// getLogs();
