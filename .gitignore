@@ -2,7 +2,7 @@
 !.env.sample
 
 /temp
-/tmp
+/**/tmp
 /logs
 /db
 
