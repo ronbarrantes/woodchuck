@@ -1,4 +1,9 @@
 const logUL = document.querySelector(".log-list");
+const exportBtn = document.querySelector(".export-button");
+
+exportBtn.addEventListener("click", () => {
+  console.log("CLICKED AND EXPORTINT, NOT REALLY LOL");
+});
 
 logUL.style.background = "green";
 const url = "http://localhost:8080/api/v1/logs";
