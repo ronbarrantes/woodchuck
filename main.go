@@ -1,22 +1,20 @@
 package main
 
 import (
-	"os"
-
-	"fmt"
-	"path/filepath"
-
 	"encoding/json"
 	"errors"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/ronbarrantes/woodchuck/utils"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 type Config struct {
