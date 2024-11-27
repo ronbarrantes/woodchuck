@@ -59,6 +59,7 @@ const (
 type APIServer struct {
 	listenAddress string
 	db            *DBFile
+	logChannel    chan Log
 }
 
 type JSONLogLevel string
@@ -76,6 +77,7 @@ func Server(address string, db *DBFile) *APIServer {
 	return &APIServer{
 		listenAddress: address,
 		db:            db,
+		logChannel:    make(chan Log, 100), // Adjust the buffer size as needed
 	}
 }
 
@@ -114,6 +116,7 @@ func (s *APIServer) Run() {
 	// Serve static files from the "static" directory
 	router.HandleFunc("/", s.handleMainPage)
 	router.HandleFunc("/api/v1/logs", s.handlePath) // .Methods("POST")
+	router.HandleFunc("/api/v1/events", s.handleSSEEvent)
 
 	staticFileDirectory := http.Dir("./static/")
 	staticFileHandler := http.StripPrefix("/", http.FileServer(staticFileDirectory))
@@ -134,6 +137,30 @@ func (s *APIServer) handlePath(w http.ResponseWriter, r *http.Request) {
 		s.handlePostLog(w, r)
 	default:
 		http.Error(w, fmt.Sprintf("Method not allowed: %s", r.Method), http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *APIServer) handleSSEEvent(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "Streaming unsupported", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Println("ABOUT TO SEND THE EVENT MESSAGE")
+
+	for {
+		select {
+		case msg := <-s.logChannel:
+			fmt.Fprintf(w, "data Logging: %x\n\n", msg.ID)
+			flusher.Flush()
+		case <-r.Context().Done():
+			return
+		}
 	}
 }
 
@@ -181,10 +208,16 @@ func (s *APIServer) handlePostLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.db.WriteLog(registeredLog); err != nil {
+	newLog, err := s.db.WriteLog(registeredLog)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	fmt.Println("ALMOST DONE WITH THE LOG")
+
+	s.logChannel <- newLog
+
+	fmt.Println("DONE WITH THE NEW LOG")
 
 	utils.WriteJSON(w, http.StatusOK, registeredLog)
 }
@@ -251,13 +284,19 @@ func (f *DBFile) InitDB() error {
 }
 
 // Write to the logs
-func (f *DBFile) WriteLog(log Log) error {
+func (f *DBFile) WriteLog(log Log) (Log, error) {
 	if f.db == nil {
-		return fmt.Errorf("database not initialized")
+		return Log{}, fmt.Errorf("database not initialized")
 	}
 
 	result := f.db.Create(&log)
-	return result.Error
+	if result.Error != nil {
+		return Log{}, result.Error
+	}
+
+	fmt.Println("The log --->>", log)
+
+	return log, nil
 }
 
 // Read the logs
