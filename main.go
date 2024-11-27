@@ -157,9 +157,10 @@ func (s *APIServer) handleSSEEvent(w http.ResponseWriter, r *http.Request) {
 		select {
 		case log := <-s.logChannel:
 			// Assuming log has fields ID and Message similar to GetLogs
-			logData := fmt.Sprintf("ID: %x, Message: %s", log.ID, log.Message)
+			logData := fmt.Sprintf("ID: %d, Message: %s", log.ID, log.Message)
 			fmt.Fprintf(w, "data: %s\n\n", logData)
 			flusher.Flush()
+
 		case <-r.Context().Done():
 			return
 		}
