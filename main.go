@@ -33,17 +33,6 @@ func main() {
 		panic(err)
 	}
 
-	//	Example of writing to the database
-	logEntry := Log{
-		LogLevel: "info",
-		UserID:   "user123",
-		Message:  "This is a log message",
-	}
-
-	if err := db.WriteLog(logEntry); err != nil {
-		panic(err)
-	}
-
 	server := Server(config.Port, db)
 	server.Run()
 }
