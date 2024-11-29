@@ -156,9 +156,24 @@ func (s *APIServer) handleSSEEvent(w http.ResponseWriter, r *http.Request) {
 	for {
 		select {
 		case log := <-s.logChannel:
-			// Assuming log has fields ID and Message similar to GetLogs
-			logData := fmt.Sprintf("ID: %d, Message: %s", log.ID, log.Message)
-			fmt.Fprintf(w, "data: %s\n\n", logData)
+
+			logEntry, err := CreateLogEntry(log)
+			if err != nil {
+				utils.WriteJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+				return
+			}
+
+			w.Header().Set("Content-Type", "text/event-stream")
+			w.Header().Set("Cache-Control", "no-cache")
+			w.Header().Set("Connection", "keep-alive")
+
+			jsonData, err := json.Marshal(logEntry)
+			if err != nil {
+				utils.WriteJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+				return
+			}
+
+			fmt.Fprintf(w, "data: %s\n\n", jsonData)
 			flusher.Flush()
 
 		case <-r.Context().Done():
@@ -167,14 +182,26 @@ func (s *APIServer) handleSSEEvent(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func CreateLogEntry(log Log) LogEntry {
-	return LogEntry{
-		Timestamp: log.CreatedAt.UTC(),
-		UserID:    log.UserID,
-		LogLevel:  JSONLogLevel(log.LogLevel),
-		LogID:     int(log.ID),
-		Message:   log.Message,
+func CreateLogEntry(log Log) (LogEntry, error) {
+	if log.ID == 0 {
+		return LogEntry{}, fmt.Errorf("log ID cannot be zero")
 	}
+
+	if log.UserID == "" {
+		return LogEntry{}, fmt.Errorf("user ID cannot be empty")
+	}
+
+	if log.Message == "" {
+		return LogEntry{}, fmt.Errorf("message cannot be empty")
+	}
+
+	return LogEntry{
+			Timestamp: log.CreatedAt.UTC(),
+			UserID:    log.UserID,
+			LogLevel:  JSONLogLevel(log.LogLevel),
+			LogID:     int(log.ID),
+			Message:   log.Message},
+		nil
 }
 
 // Gets all the logs
@@ -189,14 +216,13 @@ func (s *APIServer) handleGetLog(w http.ResponseWriter, _ *http.Request) {
 	var logs []LogEntry
 
 	for _, log := range results {
+		logEntry, err := CreateLogEntry(log)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 
-		logs = append(logs, LogEntry{
-			Timestamp: log.CreatedAt.UTC(),
-			UserID:    log.UserID,
-			LogLevel:  JSONLogLevel(log.LogLevel),
-			LogID:     int(log.ID),
-			Message:   log.Message,
-		})
+		logs = append(logs, logEntry)
 	}
 
 	utils.WriteJSON(w, http.StatusOK, logs)
