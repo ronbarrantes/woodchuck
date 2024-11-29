@@ -72,7 +72,7 @@ const getLogs = async () => {
 const eventSource = new EventSource("http://localhost:8080/api/v1/events");
 
 eventSource.onmessage = (event) => {
-  console.log("New SSE message:", event.data);
+  console.log(event.data);
 };
 
 getLogs();
