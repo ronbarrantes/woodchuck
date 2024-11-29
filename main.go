@@ -151,25 +151,18 @@ func (s *APIServer) handleSSEEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("ABOUT TO SEND THE EVENT MESSAGE")
-
 	for {
 		select {
 		case log := <-s.logChannel:
-
 			logEntry, err := CreateLogEntry(log)
 			if err != nil {
-				utils.WriteJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+				handleError(w, err)
 				return
 			}
 
-			w.Header().Set("Content-Type", "text/event-stream")
-			w.Header().Set("Cache-Control", "no-cache")
-			w.Header().Set("Connection", "keep-alive")
-
 			jsonData, err := json.Marshal(logEntry)
 			if err != nil {
-				utils.WriteJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+				handleError(w, err)
 				return
 			}
 
@@ -180,6 +173,10 @@ func (s *APIServer) handleSSEEvent(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+}
+
+func handleError(w http.ResponseWriter, err error) {
+	utils.WriteJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 }
 
 func CreateLogEntry(log Log) (LogEntry, error) {

@@ -23,7 +23,9 @@ const colorLevel = (level) => {
   return levelColor;
 };
 
-const createLi = (timestamp, log_id, level, user_id, message) => {
+const createLi = (log) => {
+  console.log(log);
+
   const logLI = document.createElement("li");
   const tsLi = document.createElement("span");
   const lLvlLi = document.createElement("span");
@@ -31,14 +33,17 @@ const createLi = (timestamp, log_id, level, user_id, message) => {
   const uIdLi = document.createElement("span");
   const msgLi = document.createElement("span");
 
-  logLI.className = "log-list-li";
-  lLvlLi.style.color = colorLevel(level);
+  const date = new Date(log.timestamp);
+  const ts = date.toISOString();
 
-  tsLi.innerText = timestamp;
-  lLvlLi.innerText = level;
-  lIdLi.innerText = log_id;
-  uIdLi.innerText = user_id;
-  msgLi.innerText = message;
+  logLI.className = "log-list-li";
+  lLvlLi.style.color = colorLevel(log.level);
+
+  tsLi.innerText = ts;
+  lLvlLi.innerText = log.level;
+  lIdLi.innerText = log.log_id;
+  uIdLi.innerText = log.user_id;
+  msgLi.innerText = log.message;
 
   logLI.appendChild(tsLi);
   logLI.appendChild(lLvlLi);
@@ -53,17 +58,7 @@ const createLi = (timestamp, log_id, level, user_id, message) => {
 const getLogs = async () => {
   const apiCall = await fetch(url);
   data = (await apiCall.json()).map((log) => {
-    const date = new Date(log.timestamp);
-    console.log("TS", log.timestamp);
-    timestamp = date.toISOString();
-
-    const logLi = createLi(
-      timestamp,
-      log.log_id,
-      log.level,
-      log.user_id,
-      log.message,
-    );
+    const logLi = createLi(log);
 
     logUL.appendChild(logLi);
   });
@@ -72,7 +67,9 @@ const getLogs = async () => {
 const eventSource = new EventSource("http://localhost:8080/api/v1/events");
 
 eventSource.onmessage = (event) => {
-  console.log(event.data);
+  console.log(typeof event.data);
+  const logLi = createLi(JSON.parse(event.data));
+  logUL.appendChild(logLi);
 };
 
 getLogs();
