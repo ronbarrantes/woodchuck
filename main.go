@@ -167,6 +167,16 @@ func (s *APIServer) handleSSEEvent(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func CreateLogEntry(log Log) LogEntry {
+	return LogEntry{
+		Timestamp: log.CreatedAt.UTC(),
+		UserID:    log.UserID,
+		LogLevel:  JSONLogLevel(log.LogLevel),
+		LogID:     int(log.ID),
+		Message:   log.Message,
+	}
+}
+
 // Gets all the logs
 func (s *APIServer) handleGetLog(w http.ResponseWriter, _ *http.Request) {
 	results, err := s.db.ReadLogs()
