@@ -1,0 +1,67 @@
+*,
+*::before,
+*::after {
+  /* outline: 1px dashed red;*/
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  background: #222;
+  color: #eee;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+header,
+footer {
+  flex-shrink: 0;
+}
+header {
+}
+
+header h1 {
+  margin: 0;
+}
+
+footer {
+}
+
+main {
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.log-list {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 0 0 1rem;
+  font-family: "Courier New", Courier, monospace;
+  overflow-y: scroll;
+  max-height: fit-content;
+  height: 100vh;
+  border: 1px dotted red;
+}
+
+.action-list {
+  color: #fff;
+}
+
+.action-list a {
+  color: #fff;
+}
+
+.action-list a:hover {
+  color: #ff0;
+}
+
+.log-list-li {
+  /* background: transparent; */
+}

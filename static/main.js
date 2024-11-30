@@ -69,7 +69,8 @@ const eventSource = new EventSource("http://localhost:8080/api/v1/events");
 eventSource.onmessage = (event) => {
   console.log(typeof event.data);
   const logLi = createLi(JSON.parse(event.data));
-  logUL.appendChild(logLi);
+  logUL.append(logLi);
+  logLi.scrollIntoView({ behavior: "smooth" });
 };
 
 getLogs();
