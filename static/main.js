@@ -1,11 +1,11 @@
-const logUL = document.querySelector(".log-list");
+const logUl = document.querySelector(".log-list");
 const exportBtn = document.querySelector(".export-button");
 
 exportBtn.addEventListener("click", () => {
   console.log("CLICKED AND EXPORTINT, NOT REALLY LOL");
 });
 
-logUL.style.background = "green";
+logUl.style.background = "green";
 const url = "http://localhost:8080/api/v1/logs";
 
 const colorLevel = (level) => {
@@ -26,7 +26,7 @@ const colorLevel = (level) => {
 const createLi = (log) => {
   console.log(log);
 
-  const logLI = document.createElement("li");
+  const logLi = document.createElement("li");
   const tsLi = document.createElement("span");
   const lLvlLi = document.createElement("span");
   const lIdLi = document.createElement("span");
@@ -36,7 +36,7 @@ const createLi = (log) => {
   const date = new Date(log.timestamp);
   const ts = date.toISOString();
 
-  logLI.className = "log-list-li";
+  logLi.className = "log-item";
   lLvlLi.style.color = colorLevel(log.level);
 
   tsLi.innerText = ts;
@@ -45,13 +45,13 @@ const createLi = (log) => {
   uIdLi.innerText = log.user_id;
   msgLi.innerText = log.message;
 
-  logLI.appendChild(tsLi);
-  logLI.appendChild(lLvlLi);
-  logLI.appendChild(lIdLi);
-  logLI.appendChild(uIdLi);
-  logLI.appendChild(msgLi);
+  logLi.appendChild(tsLi);
+  logLi.appendChild(lLvlLi);
+  logLi.appendChild(lIdLi);
+  logLi.appendChild(uIdLi);
+  logLi.appendChild(msgLi);
 
-  return logLI;
+  return logLi;
 };
 
 // /api/v1/logs
@@ -60,8 +60,10 @@ const getLogs = async () => {
   data = (await apiCall.json()).map((log) => {
     const logLi = createLi(log);
 
-    logUL.appendChild(logLi);
+    logUl.appendChild(logLi);
   });
+
+  logUl.lastChild.scrollIntoView({ behavior: "instant" });
 };
 
 const eventSource = new EventSource("http://localhost:8080/api/v1/events");
@@ -69,8 +71,15 @@ const eventSource = new EventSource("http://localhost:8080/api/v1/events");
 eventSource.onmessage = (event) => {
   console.log(typeof event.data);
   const logLi = createLi(JSON.parse(event.data));
-  logUL.append(logLi);
+  logUl.append(logLi);
+  // logLi.scrollIntoView({ behavior: "smooth" });
+
+  // const isScrolledToBottom =
+  // logLi.parentElement.scrollHeight - logLi.parentElement.scrollTop ===
+  // logLi.parentElement.clientHeight;
+  // if (isScrolledToBottom) {
   logLi.scrollIntoView({ behavior: "smooth" });
+  // }
 };
 
 getLogs();
