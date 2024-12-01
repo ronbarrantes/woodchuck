@@ -72,14 +72,7 @@ eventSource.onmessage = (event) => {
   console.log(typeof event.data);
   const logLi = createLi(JSON.parse(event.data));
   logUl.append(logLi);
-  // logLi.scrollIntoView({ behavior: "smooth" });
-
-  // const isScrolledToBottom =
-  // logLi.parentElement.scrollHeight - logLi.parentElement.scrollTop ===
-  // logLi.parentElement.clientHeight;
-  // if (isScrolledToBottom) {
   logLi.scrollIntoView({ behavior: "smooth" });
-  // }
 };
 
 getLogs();
