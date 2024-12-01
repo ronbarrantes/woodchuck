@@ -1,7 +1,6 @@
 *,
 *::before,
 *::after {
-  /* outline: 1px dashed red;*/
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -52,39 +51,22 @@ main {
   color: #ff0;
 }
 
-/* 'grid grid-rows-[min-content,1fr] border-b border-slate-500 px-3 py-1 text-lg  font-semibold', */
-/* 'grid-cols-[0.12fr,1fr,0.6fr,1fr,0.6fr,1fr]  lg:grid-cols-[0.12fr,1fr,0.9fr,1fr,0.9fr,1fr]' */
-/* 'grid-cols-[1fr,0.6fr,1fr,0.6fr,1fr]  lg:grid-cols-[1fr,0.9fr,1fr,0.9fr,1fr]', */
-
-/* grid grid-rows-[min-content,1fr] grid grid-rows-[min-content,1fr] */
-
 .log-list {
   display: grid;
   padding: 4rem 0 0.5rem;
   grid-template-rows: min-content 1fr;
-  /* grid-template-rows: "min-content 1fr"; */
   grid-template-columns: repeat(1, 1fr);
   list-style: none;
-  /* margin: 0; */
-  /* padding: 0 0 1rem; */
   font-family: "Courier New", Courier, monospace;
   overflow-y: scroll;
-  /* max-height: fit-content; */
   height: 100vh;
-  /* border: 1px dotted red; */
+
 }
 
-/* 'grid grid-cols-[subgrid] items-center', */
-
 .log-item {
-  /* outline: 1px dotted #0e0; */
   display: grid;
   grid-template-rows: 1fr;
   grid-template-columns: 1.5fr repeat(3, 1fr) 1.5fr;
-  /* grid-template-columns: "subgrid"; */
-  /* gap: 1rem; */
-
-  /* background: transparent; */
 }
 
 .log-item > * {
