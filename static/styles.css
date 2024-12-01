@@ -1,0 +1,74 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  background: #222;
+  color: #eee;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+header,
+footer {
+  flex-shrink: 0;
+}
+header {
+}
+
+header h1 {
+  margin: 0;
+  border: 1px dashed red;
+}
+
+footer {
+}
+
+main {
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.action-list {
+  color: #fff;
+  border: 1px dotted blue;
+  display: flex;
+}
+
+.action-list a {
+  color: #fff;
+}
+
+.action-list a:hover {
+  color: #ff0;
+}
+
+.log-list {
+  display: grid;
+  padding: 4rem 0 0.5rem;
+  grid-template-rows: min-content 1fr;
+  grid-template-columns: repeat(1, 1fr);
+  list-style: none;
+  font-family: "Courier New", Courier, monospace;
+  overflow-y: scroll;
+  height: 100vh;
+
+}
+
+.log-item {
+  display: grid;
+  grid-template-rows: 1fr;
+  grid-template-columns: 1.5fr repeat(3, 1fr) 1.5fr;
+}
+
+.log-item > * {
+  outline: 1px dotted #0e0;
+}

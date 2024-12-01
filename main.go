@@ -59,6 +59,7 @@ const (
 type APIServer struct {
 	listenAddress string
 	db            *DBFile
+	logChannel    chan Log
 }
 
 type JSONLogLevel string
@@ -76,6 +77,7 @@ func Server(address string, db *DBFile) *APIServer {
 	return &APIServer{
 		listenAddress: address,
 		db:            db,
+		logChannel:    make(chan Log, 100), // Adjust the buffer size as needed
 	}
 }
 
@@ -114,6 +116,7 @@ func (s *APIServer) Run() {
 	// Serve static files from the "static" directory
 	router.HandleFunc("/", s.handleMainPage)
 	router.HandleFunc("/api/v1/logs", s.handlePath) // .Methods("POST")
+	router.HandleFunc("/api/v1/events", s.handleSSEEvent)
 
 	staticFileDirectory := http.Dir("./static/")
 	staticFileHandler := http.StripPrefix("/", http.FileServer(staticFileDirectory))
@@ -137,6 +140,67 @@ func (s *APIServer) handlePath(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *APIServer) handleSSEEvent(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "Streaming unsupported", http.StatusInternalServerError)
+		return
+	}
+
+	for {
+		select {
+		case log := <-s.logChannel:
+			logEntry, err := CreateLogEntry(log)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+
+			jsonData, err := json.Marshal(logEntry)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+
+			fmt.Fprintf(w, "data: %s\n\n", jsonData)
+			flusher.Flush()
+
+		case <-r.Context().Done():
+			return
+		}
+	}
+}
+
+func handleError(w http.ResponseWriter, err error) {
+	utils.WriteJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+}
+
+func CreateLogEntry(log Log) (LogEntry, error) {
+	if log.ID == 0 {
+		return LogEntry{}, fmt.Errorf("log ID cannot be zero")
+	}
+
+	if log.UserID == "" {
+		return LogEntry{}, fmt.Errorf("user ID cannot be empty")
+	}
+
+	if log.Message == "" {
+		return LogEntry{}, fmt.Errorf("message cannot be empty")
+	}
+
+	return LogEntry{
+			Timestamp: log.CreatedAt.UTC(),
+			UserID:    log.UserID,
+			LogLevel:  JSONLogLevel(log.LogLevel),
+			LogID:     int(log.ID),
+			Message:   log.Message},
+		nil
+}
+
 // Gets all the logs
 func (s *APIServer) handleGetLog(w http.ResponseWriter, _ *http.Request) {
 	results, err := s.db.ReadLogs()
@@ -149,14 +213,13 @@ func (s *APIServer) handleGetLog(w http.ResponseWriter, _ *http.Request) {
 	var logs []LogEntry
 
 	for _, log := range results {
+		logEntry, err := CreateLogEntry(log)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 
-		logs = append(logs, LogEntry{
-			Timestamp: log.CreatedAt.UTC(),
-			UserID:    log.UserID,
-			LogLevel:  JSONLogLevel(log.LogLevel),
-			LogID:     int(log.ID),
-			Message:   log.Message,
-		})
+		logs = append(logs, logEntry)
 	}
 
 	utils.WriteJSON(w, http.StatusOK, logs)
@@ -181,10 +244,16 @@ func (s *APIServer) handlePostLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.db.WriteLog(registeredLog); err != nil {
+	newLog, err := s.db.WriteLog(registeredLog)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	fmt.Println("ALMOST DONE WITH THE LOG")
+
+	s.logChannel <- newLog
+
+	fmt.Println("DONE WITH THE NEW LOG")
 
 	utils.WriteJSON(w, http.StatusOK, registeredLog)
 }
@@ -251,13 +320,19 @@ func (f *DBFile) InitDB() error {
 }
 
 // Write to the logs
-func (f *DBFile) WriteLog(log Log) error {
+func (f *DBFile) WriteLog(log Log) (Log, error) {
 	if f.db == nil {
-		return fmt.Errorf("database not initialized")
+		return Log{}, fmt.Errorf("database not initialized")
 	}
 
 	result := f.db.Create(&log)
-	return result.Error
+	if result.Error != nil {
+		return Log{}, result.Error
+	}
+
+	fmt.Println("The log --->>", log)
+
+	return log, nil
 }
 
 // Read the logs

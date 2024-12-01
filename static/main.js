@@ -1,11 +1,11 @@
-const logUL = document.querySelector(".log-list");
+const logUl = document.querySelector(".log-list");
 const exportBtn = document.querySelector(".export-button");
 
 exportBtn.addEventListener("click", () => {
   console.log("CLICKED AND EXPORTINT, NOT REALLY LOL");
 });
 
-logUL.style.background = "green";
+logUl.style.background = "green";
 const url = "http://localhost:8080/api/v1/logs";
 
 const colorLevel = (level) => {
@@ -23,50 +23,56 @@ const colorLevel = (level) => {
   return levelColor;
 };
 
-const createLi = (timestamp, log_id, level, user_id, message) => {
-  const logLI = document.createElement("li");
+const createLi = (log) => {
+  console.log(log);
+
+  const logLi = document.createElement("li");
   const tsLi = document.createElement("span");
   const lLvlLi = document.createElement("span");
   const lIdLi = document.createElement("span");
   const uIdLi = document.createElement("span");
   const msgLi = document.createElement("span");
 
-  logLI.className = "log-list-li";
-  lLvlLi.style.color = colorLevel(level);
+  const date = new Date(log.timestamp);
+  const ts = date.toISOString();
 
-  tsLi.innerText = timestamp;
-  lLvlLi.innerText = level;
-  lIdLi.innerText = log_id;
-  uIdLi.innerText = user_id;
-  msgLi.innerText = message;
+  logLi.className = "log-item";
+  lLvlLi.style.color = colorLevel(log.level);
 
-  logLI.appendChild(tsLi);
-  logLI.appendChild(lLvlLi);
-  logLI.appendChild(lIdLi);
-  logLI.appendChild(uIdLi);
-  logLI.appendChild(msgLi);
+  tsLi.innerText = ts;
+  lLvlLi.innerText = log.level;
+  lIdLi.innerText = log.log_id;
+  uIdLi.innerText = log.user_id;
+  msgLi.innerText = log.message;
 
-  return logLI;
+  logLi.appendChild(tsLi);
+  logLi.appendChild(lLvlLi);
+  logLi.appendChild(lIdLi);
+  logLi.appendChild(uIdLi);
+  logLi.appendChild(msgLi);
+
+  return logLi;
 };
 
 // /api/v1/logs
 const getLogs = async () => {
   const apiCall = await fetch(url);
   data = (await apiCall.json()).map((log) => {
-    const date = new Date(log.timestamp);
-    console.log("TS", log.timestamp);
-    timestamp = date.toISOString();
+    const logLi = createLi(log);
 
-    const logLi = createLi(
-      timestamp,
-      log.log_id,
-      log.level,
-      log.user_id,
-      log.message,
-    );
-
-    logUL.appendChild(logLi);
+    logUl.appendChild(logLi);
   });
+
+  logUl.lastChild.scrollIntoView({ behavior: "instant" });
+};
+
+const eventSource = new EventSource("http://localhost:8080/api/v1/events");
+
+eventSource.onmessage = (event) => {
+  console.log(typeof event.data);
+  const logLi = createLi(JSON.parse(event.data));
+  logUl.append(logLi);
+  logLi.scrollIntoView({ behavior: "smooth" });
 };
 
 getLogs();
