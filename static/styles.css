@@ -1,3 +1,7 @@
+:root {
+  --border-style: 1px dotted fuchsia;
+}
+
 *,
 *::before,
 *::after {
@@ -65,10 +69,15 @@ main {
 .log-item {
   display: grid;
   grid-template-rows: 1fr;
-  grid-template-columns: 10rem repeat(2, 0.3fr) 1fr 1.5fr;
+  grid-template-columns: 12rem repeat(2, 0.3fr) 1fr 1.5fr;
+  border-right: var(--border-style);
+}
+
+.log-item:hover {
+  background: hsl(100 80% 40% / 0.2);
 }
 
 .log-item > * {
-  border-left: 1px dotted fuchsia;
-  /* border: 1px dotted fuchsia; */
+  border-left: var(--border-style);
+  padding: 0.2rem 0;
 }
