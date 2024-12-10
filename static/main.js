@@ -5,7 +5,7 @@ exportBtn.addEventListener("click", () => {
   console.log("CLICKED AND EXPORTINT, NOT REALLY LOL");
 });
 
-logUl.style.background = "green";
+// logUl.style.background = "green";
 const url = "http://localhost:8080/api/v1/logs";
 
 const colorLevel = (level) => {

@@ -60,15 +60,15 @@ main {
   font-family: "Courier New", Courier, monospace;
   overflow-y: scroll;
   height: 100vh;
-
 }
 
 .log-item {
   display: grid;
   grid-template-rows: 1fr;
-  grid-template-columns: 1.5fr repeat(3, 1fr) 1.5fr;
+  grid-template-columns: 10rem repeat(2, 0.3fr) 1fr 1.5fr;
 }
 
 .log-item > * {
-  outline: 1px dotted #0e0;
+  border-left: 1px dotted fuchsia;
+  /* border: 1px dotted fuchsia; */
 }
