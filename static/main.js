@@ -34,7 +34,7 @@ const createLi = (log) => {
   const msgLi = document.createElement("span");
 
   const date = new Date(log.timestamp);
-  const ts = date.toISOString();
+  const ts = date.toISOString().split(".")[0];
 
   logLi.className = "log-item";
   lLvlLi.style.color = colorLevel(log.level);
