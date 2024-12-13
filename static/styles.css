@@ -1,13 +1,20 @@
+:root {
+  --border-style: 1px dotted fuchsia;
+}
+
 *,
 *::before,
 *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  /* outline: 1px dashed orange; */
 }
 
 body {
   display: flex;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 1em;
   flex-direction: column;
   background: #222;
   color: #eee;
@@ -17,19 +24,34 @@ body {
   padding: 0;
 }
 
+body button {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 1em;
+  background: transparent;
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
 header,
 footer {
   flex-shrink: 0;
 }
+
 header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px dotted hsl(22 43% 30%);
+  padding: 0.2rem;
 }
 
 header h1 {
   margin: 0;
-  border: 1px dashed red;
 }
 
-footer {
+.woodchuck {
+  padding: 0 0.5rem;
 }
 
 main {
@@ -39,16 +61,27 @@ main {
 
 .action-list {
   color: #fff;
-  border: 1px dotted blue;
   display: flex;
+  /* TODO: remove the none and add make buttons better */
+  display: none;
+  list-style: none;
+  gap: 0.5rem;
 }
 
-.action-list a {
-  color: #fff;
+.button-link {
+  display: block;
+  background: hsl(22 43% 30% / 0.3);
+  color: white;
+  border: none;
+  text-decoration: none;
+  padding: 0.2rem 0.5rem;
+  margin: 0;
+  transition-property: all;
+  transition-duration: 200ms;
 }
 
-.action-list a:hover {
-  color: #ff0;
+.button-link:hover {
+  background: hsl(22 43% 30% / 0.8);
 }
 
 .log-list {
@@ -57,18 +90,22 @@ main {
   grid-template-rows: min-content 1fr;
   grid-template-columns: repeat(1, 1fr);
   list-style: none;
-  font-family: "Courier New", Courier, monospace;
   overflow-y: scroll;
   height: 100vh;
-
 }
 
 .log-item {
   display: grid;
   grid-template-rows: 1fr;
-  grid-template-columns: 1.5fr repeat(3, 1fr) 1.5fr;
+  grid-template-columns: 12rem repeat(2, 0.3fr) 1fr 1.5fr;
+  border-right: var(--border-style);
+}
+
+.log-item:hover {
+  background: hsl(100 80% 40% / 0.2);
 }
 
 .log-item > * {
-  outline: 1px dotted #0e0;
+  border-left: var(--border-style);
+  padding: 0.2rem 0;
 }
